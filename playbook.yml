@@ -2,7 +2,7 @@
   become: yes
   vars_prompt:
     - name: zabbix_version
-      prompt: "Which version would you like to install (4.0, 4.4, ...)?"
+      prompt: "Which version would you like to install (4.0, 4.4, 5.0)?"
       private: no
   tasks:
   - name: 1. We need to define some facts :)
