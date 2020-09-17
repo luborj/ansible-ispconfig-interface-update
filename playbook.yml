@@ -1,4 +1,5 @@
-- hosts: all
+- hosts: 127.0.0.1
+  connection: local
   become: yes
   vars_prompt:
     - name: zabbix_version
@@ -11,7 +12,7 @@
       zabbix_server_repo: "http://repo.zabbix.com/zabbix/{{ zabbix_version }}/{{ ansible_distribution.lower() }} {{ ansible_distribution_release }} main"
   - name: 2. Install additional software
     apt:
-      name: ca-certificates,nano,mc,vim,wget,curl
+      name: ca-certificates,nano,mc,vim,wget,curl,gnupg
       state: latest
   - name: 3. Add gpg key
     apt_key:
