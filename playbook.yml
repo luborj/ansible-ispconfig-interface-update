@@ -3,32 +3,32 @@
   become: yes
   vars_prompt:
     - name: zabbix_version
-      prompt: "Which version would you like to install (4.0, 4.4, 5.0)?"
+      prompt: "Which version would you like to install (5.0, 5.2)?"
       private: no
   tasks:
-  - name: 1. We need to define some facts :)
+  - name: We need to define some facts :)
     set_fact:
       db_random_password: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digit,hexdigits')}}"
       zabbix_server_repo: "http://repo.zabbix.com/zabbix/{{ zabbix_version }}/{{ ansible_distribution.lower() }} {{ ansible_distribution_release }} main"
-  - name: 2. Install additional software
+  - name: Install additional software
     apt:
       name: ca-certificates,nano,mc,vim,wget,curl,gnupg
       state: latest
-  - name: 3. Add gpg key
+  - name: Add gpg key
     apt_key:
       url: http://repo.zabbix.com/zabbix-official-repo.key
-  - name: 4. Add zabbix repository
+  - name: Add zabbix repository
     apt_repository:
       repo: "deb {{ zabbix_server_repo }}"
       state: present
-  - name: 5. Update cache
+  - name: Update cache
     apt:
       update_cache: yes
-  - name: 6. Install MariaDB, Zabbix and Zabbix frontend
+  - name: Install MariaDB, Zabbix and Zabbix frontend
     apt:
       name: mariadb-server,python3-pymysql,zabbix-agent,zabbix-frontend-php,zabbix-server-mysql,zabbix-apache-conf,zabbix-get
       state: present
-  - name: 7. Create database
+  - name: Create database
     mysql_db:
         name: zabbix
         encoding: utf8
@@ -37,14 +37,14 @@
         login_user: root
         login_password: ''
         login_unix_socket: /var/run/mysqld/mysqld.sock
-  - name: 8. Create user and grant privileges
+  - name: Create user and grant privileges
     mysql_user:
       name: zabbix
       password: "{{ db_random_password }}"
       priv: 'zabbix.*:ALL'
       state: present
       login_unix_socket: /var/run/mysqld/mysqld.sock
-  - name: 9. Import zabbix database
+  - name: Import zabbix database
     mysql_db:
       name: zabbix
       state: import
@@ -52,15 +52,15 @@
       login_user: zabbix
       login_password: "{{ db_random_password }}"
       login_unix_socket: /var/run/mysqld/mysqld.sock
-  - name: 10. Set timezone in apache2 php.ini
+  - name: Set timezone in apache2 php.ini
     lineinfile: dest=/etc/php/7.3/apache2/php.ini
                 regexp='date.timezone ='
                 line='date.timezone = Europe/Bratislava'
-  - name: 11. Set DBPassword in zabbix_server.conf
+  - name: Set DBPassword in zabbix_server.conf
     lineinfile: dest=/etc/zabbix/zabbix_server.conf
                 regexp='DBPassword'
                 line='DBPassword = {{ db_random_password }}'
-  - name: 12. Enable services in systemd
+  - name: Enable services in systemd
     systemd:
       name: "{{ item }}"
       enabled: yes
@@ -68,7 +68,7 @@
     with_items:
       - 'zabbix-agent'
       - 'zabbix-server'
-  - name: 13. Restart services
+  - name: Restart services
     systemd:
       name: "{{ item }}"
       state: restarted
@@ -76,11 +76,15 @@
       - 'zabbix-agent'
       - 'zabbix-server'
       - 'apache2'
-  - name: 14. Finish
-    debug: 
+  - template:
+          src: zabbix.conf.php.conf
+          dest: /etc/zabbix/web/zabbix.conf.php
+          owner: www-data
+          group: www-data
+          mode: '0644'
+  - name: Finish
+    debug:
       msg:
-        - "Almost done. Please open your web browser and continue http://{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}/zabbix"
-        - "MySQL configuration:"
-        - " - database: zabbix"
-        - " - username: zabbix"
-        - " - password: {{ db_random_password }}"
+        - "Your Zabbix Server installation is done, please go to: http://{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}/zabbix"
+        - " - Username: Admin"
+        - " - Password: zabbix"
