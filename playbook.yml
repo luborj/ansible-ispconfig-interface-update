@@ -58,7 +58,7 @@
       login_password: "{{ db_random_password }}"
       login_unix_socket: /var/run/mysqld/mysqld.sock
   - name: Set timezone in apache2 php.ini
-    lineinfile: dest=/etc/php{{ php }}/apache2/php.ini
+    lineinfile: dest=/etc/php/{{ php }}/apache2/php.ini
                 regexp='date.timezone ='
                 line='date.timezone = Europe/Bratislava'
   - name: Set DBPassword in zabbix_server.conf
