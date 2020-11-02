@@ -5,8 +5,8 @@
     - name: zabbix_version
       prompt: "Which version of Zabbix server would you like to install (5.0, 5.2)?"
       private: no
-    - vars:
-        php: "{% if ansible_distribution_release == 'buster' %}7.3{% elif ansible_distribution_release == 'focal' %}7.4{% elif ansible_distribution_release == 'bionic' %}7.2{% else %}break{% endif %}"
+  vars:
+    php: "{% if ansible_distribution_release == 'buster' %}7.3{% elif ansible_distribution_release == 'focal' %}7.4{% elif ansible_distribution_release == 'bionic' %}7.2{% else %}break{% endif %}"
   tasks:
   - name: 'Check Linux Distribution'
     fail: msg="Unsupported Distribution"
