@@ -3,9 +3,14 @@
   become: yes
   vars_prompt:
     - name: zabbix_version
-      prompt: "Which version would you like to install (5.0, 5.2)?"
+      prompt: "Which version of Zabbix server would you like to install (5.0, 5.2)?"
       private: no
+    - vars:
+        php: "{% if ansible_distribution_release == 'buster' %}7.3{% elif ansible_distribution_release == 'focal' %}7.4{% elif ansible_distribution_release == 'bionic' %}7.2{% else %}break{% endif %}"
   tasks:
+  - name: 'Check Linux Distribution'
+    fail: msg="Unsupported Distribution"
+    when: "php == 'break'"
   - name: We need to define some facts :)
     set_fact:
       db_random_password: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digit,hexdigits')}}"
@@ -53,7 +58,7 @@
       login_password: "{{ db_random_password }}"
       login_unix_socket: /var/run/mysqld/mysqld.sock
   - name: Set timezone in apache2 php.ini
-    lineinfile: dest=/etc/php/7.3/apache2/php.ini
+    lineinfile: dest=/etc/php{{ php }}/apache2/php.ini
                 regexp='date.timezone ='
                 line='date.timezone = Europe/Bratislava'
   - name: Set DBPassword in zabbix_server.conf
@@ -76,7 +81,8 @@
       - 'zabbix-agent'
       - 'zabbix-server'
       - 'apache2'
-  - template:
+  - name: Import Zabbix frontend configuration
+    template:
           src: zabbix.conf.php.conf
           dest: /etc/zabbix/web/zabbix.conf.php
           owner: www-data
@@ -85,6 +91,6 @@
   - name: Finish
     debug:
       msg:
-        - "Your Zabbix Server installation is done, please go to: http://{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}/zabbix"
-        - " - Username: Admin"
-        - " - Password: zabbix"
+        - "The installation of Zabbix server is done, please go to Zabbix frontend: http://{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}/zabbix ."
+        - "Default username is Admin and password is zabbix."
+        - "CAUTION: Do not use default credentials in production."
