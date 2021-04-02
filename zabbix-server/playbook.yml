@@ -33,6 +33,16 @@
     apt:
       name: mariadb-server,python3-pymysql,zabbix-agent,zabbix-frontend-php,zabbix-server-mysql,zabbix-apache-conf,zabbix-get
       state: present
+  - name: Restart and enable mariadb
+    service:
+      name: "{{ item }}"
+      state: restarted
+      enabled: yes
+    with_items:
+      - 'mariadb'
+      - 'mysql'
+      - 'mariadbd'
+    ignore_errors: yes
   - name: Create database
     mysql_db:
         name: zabbix
@@ -65,18 +75,11 @@
     lineinfile: dest=/etc/zabbix/zabbix_server.conf
                 regexp='DBPassword'
                 line='DBPassword = {{ db_random_password }}'
-  - name: Enable services in systemd
-    systemd:
-      name: "{{ item }}"
-      enabled: yes
-      masked: no
-    with_items:
-      - 'zabbix-agent'
-      - 'zabbix-server'
-  - name: Restart services
-    systemd:
+  - name: Restart and enable services
+    service:
       name: "{{ item }}"
       state: restarted
+      enabled: yes
     with_items:
       - 'zabbix-agent'
       - 'zabbix-server'
